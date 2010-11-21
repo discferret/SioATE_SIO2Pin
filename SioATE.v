@@ -1,4 +1,5 @@
 module SioATE (
+	input					MCLK,
 	input					SioClk,
 	output reg			SioDat,
 	input			[9:0]	SioTest
@@ -6,8 +7,7 @@ module SioATE (
 
 localparam	ST_INIT			= 4'd0;
 localparam	ST_SEND_ZEROES	= 4'd1;
-localparam	ST_SEND_ONE		= 4'd2;
-localparam	ST_SEND_BIT		= 4'd3;
+localparam	ST_SEND_BIT		= 4'd2;
 
 reg	[3:0]	state;
 reg	[4:0]	zerocount;
@@ -16,32 +16,33 @@ reg	[9:0]	shifter;
 always @(posedge SioClk) begin
 	case (state)
 		ST_INIT: begin
-						zerocount	<= 19;
+						zerocount	<= 20;
 						SioDat		<= 0;
 						state			<= ST_SEND_ZEROES;
 					end
 		ST_SEND_ZEROES: begin
 						if (zerocount > 0) begin
+							// send 20 zeroes
 							zerocount <= zerocount - 5'd1;
+							SioDat <= 0;
 							state <= ST_SEND_ZEROES;
 						end else begin
-							state <= ST_SEND_ONE;
+							// send a '1', then start sending data bits
+							SioDat <= 1;
+							shifter <= SioTest; // 10'h355;
+							zerocount <= 10;
+							state <= ST_SEND_BIT;
 						end
-					end
-		ST_SEND_ONE: begin
-						SioDat <= 1;
-						shifter <= SioTest;
-						state <= ST_SEND_BIT;
-						zerocount <= 10;
 					end
 		ST_SEND_BIT: begin
 						if (zerocount > 0) begin
 							SioDat <= shifter[9];
 							shifter <= {shifter[8:0], 1'b0};
 							zerocount <= zerocount - 5'd1;
+							state <= ST_SEND_BIT;
 						end else begin
-							zerocount <= 20;
 							SioDat <= 0;
+							zerocount <= 20;
 							state <= ST_SEND_ZEROES;
 						end
 					end
@@ -50,5 +51,9 @@ always @(posedge SioClk) begin
 					end
 	endcase
 end
-
+/*
+always @(posedge SioClk) begin
+	SioDat <= ~SioDat;
+end
+*/
 endmodule
