@@ -36,8 +36,8 @@ always @(posedge SioClk) begin
 					end
 		ST_SEND_BIT: begin
 						if (zerocount > 0) begin
-							SioDat <= shifter[0];
-							shifter <= {1'b0, shifter[9:1]};
+							SioDat <= shifter[9];
+							shifter <= {shifter[8:0], 1'b0};
 							zerocount <= zerocount - 5'd1;
 						end else begin
 							zerocount <= 20;
