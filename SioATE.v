@@ -2,7 +2,8 @@ module SioATE (
 	input					MCLK,
 	input					SioClk,
 	output reg			SioDat,
-	input			[9:0]	SioTest
+	input			[9:0]	SioTest,
+	output reg			StatusLED
 );
 
 localparam	ST_INIT			= 4'd0;
@@ -51,9 +52,16 @@ always @(posedge SioClk) begin
 					end
 	endcase
 end
-/*
-always @(posedge SioClk) begin
-	SioDat <= ~SioDat;
+
+// status LED blinker
+reg [31:0] LEDcounter;
+always @(posedge MCLK) begin
+	if (LEDcounter == 32'd20_000_000) begin
+		LEDcounter <= 32'd0;
+	end else begin
+		LEDcounter <= LEDcounter + 1;
+		StatusLED <= (LEDcounter >= 32'd10_000_000);
+	end
 end
-*/
+
 endmodule
